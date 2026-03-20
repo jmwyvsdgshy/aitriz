@@ -33,26 +33,55 @@
                 <!-- 导航菜单 -->
                 <el-menu :default-active="activeMenu" class="h-[64px] border-none !bg-transparent w-full" mode="horizontal" @select="handleSelect" :ellipsis="false">
                     <el-menu-item index="settings.html">
-                        <el-icon><Setting /></el-icon>1. 系统配置
+                        <el-icon><Setting /></el-icon>{{ t('navSettings') }}
                     </el-menu-item>
                     <el-menu-item index="problem.html">
-                        <el-icon><EditPen /></el-icon>2. 问题定义与分析
+                        <el-icon><EditPen /></el-icon>{{ t('navProblem') }}
                     </el-menu-item>
                     <el-menu-item index="solution.html">
-                        <el-icon><Opportunity /></el-icon>3. TRIZ 方案生成
+                        <el-icon><Opportunity /></el-icon>{{ t('navSolution') }}
                     </el-menu-item>
                 </el-menu>
             </div>
 
             <!-- 右侧快捷操作与状态 -->
             <div class="flex items-center space-x-4 shrink-0 ml-4">
-                <el-tag size="large" effect="plain" type="info" class="!border-gray-200 !text-gray-600">
-                    <el-icon class="mr-1"><Lock /></el-icon>数据仅保留在本地
-                </el-tag>
-                <!-- <el-tooltip content="了解 TRIZ 理论" placement="bottom">
-                    <el-button plain circle icon="Reading" />
-                </el-tooltip> -->
-                <el-button type="primary" plain icon="Share" @click="shareApp">分享应用</el-button>
+                <!-- 语言切换 -->
+                <el-dropdown @command="handleLangChange" trigger="click">
+                    <span class="el-dropdown-link flex items-center cursor-pointer text-gray-600 hover:text-blue-500 transition-colors">
+                        <el-icon class="mr-1"><Location /></el-icon>
+                        {{ currentLang === 'zh' ? '中文' : 'English' }}
+                        <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                    </span>
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <el-dropdown-item command="zh" :disabled="currentLang === 'zh'">中文 (简体)</el-dropdown-item>
+                            <el-dropdown-item command="en" :disabled="currentLang === 'en'">English</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
+
+                <!-- 公众号关注入口 -->
+                <el-tooltip placement="bottom" effect="light">
+                    <template #content>
+                        <div class="text-center p-2">
+                            <p class="font-bold text-gray-800 mb-1">{{ t('followDesc') }}</p>
+                            <p class="text-blue-500 font-bold text-lg mb-2">AI数术研习社</p>
+                            <el-button size="small" type="primary" plain @click="copyWechatName">
+                                {{ t('copyBtn') }}
+                            </el-button>
+                        </div>
+                    </template>
+                    <el-button type="success" plain icon="ChatDotRound" @click="copyWechatName" class="hover:scale-105 transition-transform">
+                        {{ t('followAccount') }}
+                    </el-button>
+                </el-tooltip>
+
+                <el-button type="info" plain icon="Lock" class="hidden sm:inline-flex !cursor-default hover:!bg-white hover:!border-gray-300 hover:!text-gray-500" style="pointer-events: none;">
+                    {{ t('localDataOnly') }}
+                </el-button>
+                
+                <el-button type="primary" plain icon="Share" @click="shareApp">{{ t('shareApp') }}</el-button>
             </div>
         </header>
 
@@ -63,30 +92,91 @@
     </div>
 
     <script>
+        const i18n = {
+            zh: {
+                navSettings: '1. 系统配置',
+                navProblem: '2. 问题定义与分析',
+                navSolution: '3. TRIZ 方案生成',
+                localDataOnly: '数据仅保留在本地',
+                shareApp: '分享应用',
+                followAccount: '关注：AI数术研习社',
+                followDesc: '前往微信搜索公众号',
+                copyBtn: '点击复制公众号名称',
+                copySuccess: '公众号名称已复制，请前往微信搜索关注',
+                shareSuccess: '应用链接已复制到剪贴板，快去分享吧！'
+            },
+            en: {
+                navSettings: '1. Settings',
+                navProblem: '2. Problem Definition',
+                navSolution: '3. TRIZ Solutions',
+                localDataOnly: 'Local Data Only',
+                shareApp: 'Share App',
+                followAccount: 'Follow Us',
+                followDesc: 'Search in WeChat',
+                copyBtn: 'Copy Account Name',
+                copySuccess: 'Account name copied! Please search in WeChat to follow.',
+                shareSuccess: 'App link copied to clipboard!'
+            }
+        };
+
         const app = Vue.createApp({
             data() {
+                // 自动根据浏览器语言检测
+                const browserLang = navigator.language.startsWith('zh') ? 'zh' : 'en';
+                const savedLang = localStorage.getItem('triz_lang') || browserLang;
+                
                 return {
                     activeMenu: 'settings.html',
-                    currentSrc: 'settings.html'
+                    currentSrc: 'settings.html',
+                    currentLang: savedLang
                 }
             },
             mounted() {
+                // 将语言设置传递给子 iframe，并通过 URL 参数强制刷新 iframe 语言
+                this.updateIframeLang();
+
                 // 监听子 iframe 发来的路由跳转请求
                 window.addEventListener('message', (event) => {
                     if (event.data && event.data.type === 'navigate') {
                         this.activeMenu = event.data.target;
                         this.currentSrc = event.data.target;
+                        this.updateIframeLang();
                     }
                 });
             },
             methods: {
+                t(key) {
+                    return i18n[this.currentLang][key] || key;
+                },
+                handleLangChange(lang) {
+                    this.currentLang = lang;
+                    localStorage.setItem('triz_lang', lang);
+                    this.updateIframeLang();
+                },
+                updateIframeLang() {
+                    // 更新 iframe 的 src，加上 lang 参数强制刷新子页面语言状态
+                    const baseUrl = this.currentSrc.split('?')[0];
+                    this.currentSrc = `${baseUrl}?lang=${this.currentLang}&t=${new Date().getTime()}`;
+                    
+                    // 同时向已加载的 iframe 发送语言切换消息 (平滑切换)
+                    const iframe = document.getElementById('main-iframe');
+                    if (iframe && iframe.contentWindow) {
+                        iframe.contentWindow.postMessage({ type: 'langChange', lang: this.currentLang }, '*');
+                    }
+                },
                 handleSelect(key) {
                     this.activeMenu = key;
                     this.currentSrc = key;
+                    this.updateIframeLang();
+                },
+                copyWechatName() {
+                    navigator.clipboard.writeText('AI数术研习社').then(() => {
+                        ElementPlus.ElMessage.success(this.t('copySuccess'));
+                    });
                 },
                 shareApp() {
                     navigator.clipboard.writeText(window.location.href).then(() => {
-                        ElementPlus.ElMessage.success('应用链接已复制到剪贴板，快去分享吧！');
+                        ElementPlus.ElMessage.success(this.t('shareSuccess'));
                     });
                 }
             }

@@ -17,12 +17,11 @@
     <div id="app" class="p-8 h-full flex flex-col max-w-4xl mx-auto">
         <div class="flex items-center justify-between mb-8 shrink-0">
             <div class="flex items-center">
-                <h2 class="text-2xl font-bold text-gray-800">系统配置</h2>
-                <!-- <el-tag type="warning" class="ml-4" effect="light" round>企业版专用</el-tag> -->
+                <h2 class="text-2xl font-bold text-gray-800">{{ t('pageTitle') }}</h2>
             </div>
             <div class="flex space-x-3">
-                <el-button plain icon="Upload" @click="triggerImport">导入配置</el-button>
-                <el-button plain icon="Download" @click="exportConfig">导出配置</el-button>
+                <el-button plain icon="Upload" @click="triggerImport">{{ t('importBtn') }}</el-button>
+                <el-button plain icon="Download" @click="exportConfig">{{ t('exportBtn') }}</el-button>
                 <input type="file" ref="fileInput" @change="importConfig" accept=".json" style="display: none;" />
             </div>
         </div>
@@ -30,9 +29,9 @@
         <main class="flex-1 overflow-y-auto pb-12">
             <div class="space-y-6">
                 <el-alert
-                    title="数据安全说明"
+                    :title="t('alertTitle')"
                     type="info"
-                    description="系统支持接入私有化部署的大语言模型，您的创新项目数据（IFR、技术矛盾描述等）将通过加密通道传输至您配置的端点，平台不作任何留存。"
+                    :description="t('alertDesc')"
                     show-icon
                     class="!mb-2 !rounded-xl"
                 ></el-alert>
@@ -42,59 +41,70 @@
                         <div class="bg-blue-50 p-2 rounded-lg mr-3">
                             <el-icon class="text-blue-600"><Connection /></el-icon>
                         </div>
-                        AI 引擎配置 (LLM API)
+                        {{ t('formTitle') }}
                     </h3>
                     
                     <el-form :model="form" label-width="160px" label-position="left">
-                        <el-form-item label="服务提供商">
-                            <el-select v-model="form.provider" class="w-full" placeholder="请选择服务商" size="large">
-                                <el-option label="OpenAI (通用)" value="openai"></el-option>
-                                <el-option label="Azure OpenAI (企业级)" value="azure"></el-option>
-                                <el-option label="Anthropic Claude" value="anthropic"></el-option>
-                                <el-option label="百度文心一言" value="baidu"></el-option>
-                                <el-option label="阿里通义千问" value="aliyun"></el-option>
-                                <el-option label="DeepSeek" value="deepseek"></el-option>
-                                <el-option label="本地私有化部署 (如 Ollama)" value="local"></el-option>
+                        <el-form-item :label="t('provider')">
+                            <el-select v-model="form.provider" class="w-full" :placeholder="t('providerPlaceholder')" size="large" @change="handleProviderChange">
+                                <el-option-group label="国际主流大模型">
+                                    <el-option label="OpenAI (通用)" value="openai"></el-option>
+                                    <el-option label="Anthropic Claude" value="anthropic"></el-option>
+                                    <el-option label="Google Gemini" value="google"></el-option>
+                                    <el-option label="Azure OpenAI (企业级)" value="azure"></el-option>
+                                </el-option-group>
+                                <el-option-group label="国内优秀大模型">
+                                    <el-option label="DeepSeek (深度求索)" value="deepseek"></el-option>
+                                    <el-option label="阿里通义千问 (Qwen)" value="aliyun"></el-option>
+                                    <el-option label="智谱清言 (GLM)" value="zhipu"></el-option>
+                                    <el-option label="月之暗面 (Kimi)" value="moonshot"></el-option>
+                                    <el-option label="百度文心一言" value="baidu"></el-option>
+                                    <el-option label="科大讯飞 (智星)" value="xunfei"></el-option>
+                                    <el-option label="腾讯通义 (混元)" value="tencent"></el-option>
+                                </el-option-group>
+                                <el-option-group label="其他">
+                                    <el-option label="本地私有化部署 (如 Ollama)" value="local"></el-option>
+                                </el-option-group>
                             </el-select>
                         </el-form-item>
 
-                        <el-form-item label="Base URL (接口地址)">
-                            <el-input v-model="form.baseUrl" placeholder="例如：https://api.openai.com/v1" size="large"></el-input>
+                        <el-form-item :label="t('baseUrl')">
+                            <el-input v-model="form.baseUrl" :placeholder="t('baseUrlPlaceholder')" size="large"></el-input>
                         </el-form-item>
 
-                        <el-form-item label="API Key (密钥)">
+                        <el-form-item :label="t('apiKey')">
                             <el-input v-model="form.apiKey" type="password" show-password placeholder="sk-..." size="large"></el-input>
                         </el-form-item>
 
-                        <el-form-item label="模型名称 (Model)">
-                            <el-input v-model="form.modelName" placeholder="例如：gpt-4-turbo, claude-3-opus, deepseek-chat" size="large"></el-input>
+                        <el-form-item :label="t('modelName')">
+                            <el-input v-model="form.modelName" :placeholder="t('modelNamePlaceholder')" size="large"></el-input>
                         </el-form-item>
 
                         <el-divider border-style="dashed" class="!my-8"></el-divider>
 
-                        <h4 class="font-bold text-gray-700 mb-4">TRIZ 专家角色 Prompt 调优</h4>
+                        <h4 class="font-bold text-gray-700 mb-4">{{ t('promptTitle') }}</h4>
                         <el-form-item label="System Prompt">
                             <el-input 
                                 v-model="form.prompt" 
                                 type="textarea" 
                                 :rows="8"
-                                placeholder="定义 AI 的系统角色..."
+                                :placeholder="t('promptPlaceholder')"
                             ></el-input>
                             <div class="text-xs text-gray-400 mt-2 leading-tight">
-                                默认提示词已内置了结构化问题分析与完整的 TRIZ 工具链知识库。
+                                {{ t('promptDesc') }}
                             </div>
                         </el-form-item>
 
-                        <el-form-item label="生成温度 (Temperature)">
+                        <el-form-item :label="t('temperature')">
                             <el-slider v-model="form.temperature" :max="2" :step="0.1" show-input></el-slider>
-                            <div class="text-xs text-gray-400 w-full mt-1">值越低越严谨（适合严谨工程分析），值越高越发散（适合头脑风暴）。推荐值：0.4</div>
+                            <div class="text-xs text-gray-400 w-full mt-1">{{ t('tempDesc') }}</div>
                         </el-form-item>
 
                         <el-form-item class="mt-10">
                             <el-button type="primary" size="large" @click="saveConfig" class="px-10 !rounded-xl" :loading="isSaving">
-                                保存并测试连接
+                                {{ t('saveBtn') }}
                             </el-button>
-                            <el-button size="large" class="!rounded-xl ml-4">恢复默认</el-button>
+                            <el-button size="large" class="!rounded-xl ml-4" @click="resetConfig">{{ t('resetBtn') }}</el-button>
                         </el-form-item>
                     </el-form>
                 </div>
@@ -117,12 +127,93 @@
     </div>
 
     <script>
+        const i18n = {
+            zh: {
+                pageTitle: '系统配置',
+                importBtn: '导入配置',
+                exportBtn: '导出配置',
+                alertTitle: '数据安全说明',
+                alertDesc: '系统支持接入私有化部署的大语言模型，您的创新项目数据（IFR、技术矛盾描述等）将通过加密通道传输至您配置的端点，平台不作任何留存。',
+                formTitle: 'AI 引擎配置 (LLM API)',
+                provider: '服务提供商',
+                providerPlaceholder: '请选择服务商',
+                baseUrl: 'Base URL (接口地址)',
+                baseUrlPlaceholder: '例如：https://api.openai.com/v1',
+                apiKey: 'API Key (密钥)',
+                modelName: '模型名称 (Model)',
+                modelNamePlaceholder: '例如：gpt-4o, claude-3-opus',
+                promptTitle: 'TRIZ 专家角色 Prompt 调优',
+                promptPlaceholder: '定义 AI 的系统角色...',
+                promptDesc: '默认提示词已内置了结构化问题分析与完整的 TRIZ 工具链知识库。',
+                temperature: '生成温度 (Temperature)',
+                tempDesc: '值越低越严谨（适合严谨工程分析），值越高越发散（适合头脑风暴）。推荐值：0.4',
+                saveBtn: '保存并测试连接',
+                resetBtn: '恢复默认',
+                emptyApiKey: 'API Key 不能为空',
+                saveSuccess: '连接成功，配置已保存在本地浏览器！',
+                saveFail: '连接失败',
+                networkFail: '网络请求失败，请检查 Base URL 是否正确或是否存在跨域问题：',
+                exportSuccess: '配置已导出',
+                importSuccess: '配置导入成功',
+                importFail: '配置文件格式错误'
+            },
+            en: {
+                pageTitle: 'System Settings',
+                importBtn: 'Import Config',
+                exportBtn: 'Export Config',
+                alertTitle: 'Data Security Notice',
+                alertDesc: 'The system supports connecting to privately deployed LLMs. Your project data will be transmitted via encrypted channels to your configured endpoint without any platform retention.',
+                formTitle: 'AI Engine Configuration (LLM API)',
+                provider: 'Service Provider',
+                providerPlaceholder: 'Select Provider',
+                baseUrl: 'Base URL',
+                baseUrlPlaceholder: 'e.g., https://api.openai.com/v1',
+                apiKey: 'API Key',
+                modelName: 'Model Name',
+                modelNamePlaceholder: 'e.g., gpt-4o, claude-3-opus',
+                promptTitle: 'TRIZ Expert Prompt Tuning',
+                promptPlaceholder: 'Define the AI role...',
+                promptDesc: 'Default prompt includes structured problem analysis and full TRIZ toolchain knowledge.',
+                temperature: 'Temperature',
+                tempDesc: 'Lower values for rigorous analysis, higher values for brainstorming. Recommended: 0.4',
+                saveBtn: 'Save & Test Connection',
+                resetBtn: 'Reset Default',
+                emptyApiKey: 'API Key cannot be empty',
+                saveSuccess: 'Connected successfully, config saved locally!',
+                saveFail: 'Connection failed',
+                networkFail: 'Network request failed. Please check Base URL or CORS issues: ',
+                exportSuccess: 'Configuration exported',
+                importSuccess: 'Configuration imported successfully',
+                importFail: 'Invalid configuration file format'
+            }
+        };
+
         const app = Vue.createApp({
             data() {
                 // 初始化时从 localStorage 读取配置
                 const savedConfig = JSON.parse(localStorage.getItem('triz_api_config') || '{}');
+                
+                // 解析 URL 中的 lang 参数
+                const urlParams = new URLSearchParams(window.location.search);
+                const currentLang = urlParams.get('lang') || localStorage.getItem('triz_lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
+
                 return {
+                    currentLang,
                     isSaving: false,
+                    providerDefaults: {
+                        openai: { baseUrl: 'https://api.openai.com/v1', modelName: 'gpt-4o' },
+                        anthropic: { baseUrl: 'https://api.anthropic.com/v1', modelName: 'claude-3-5-sonnet-20240620' },
+                        google: { baseUrl: 'https://generativelanguage.googleapis.com/v1beta', modelName: 'gemini-1.5-pro' },
+                        azure: { baseUrl: 'https://your-resource.openai.azure.com/openai/deployments', modelName: 'gpt-4o' },
+                        deepseek: { baseUrl: 'https://api.deepseek.com/v1', modelName: 'deepseek-chat' },
+                        aliyun: { baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', modelName: 'qwen-max' },
+                        zhipu: { baseUrl: 'https://open.bigmodel.cn/api/paas/v4', modelName: 'glm-4' },
+                        moonshot: { baseUrl: 'https://api.moonshot.cn/v1', modelName: 'moonshot-v1-32k' },
+                        baidu: { baseUrl: 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat', modelName: 'ernie-4.0-8k' },
+                        xunfei: { baseUrl: 'https://spark-api-open.xf-yun.com/v1', modelName: 'generalv3.5' },
+                        tencent: { baseUrl: 'https://api.hunyuan.cloud.tencent.com/v1', modelName: 'hunyuan-pro' },
+                        local: { baseUrl: 'http://localhost:11434/v1', modelName: 'llama3' }
+                    },
                     form: {
                         provider: savedConfig.provider || 'openai',
                         baseUrl: savedConfig.baseUrl || 'https://api.openai.com/v1',
@@ -133,10 +224,27 @@
                     }
                 }
             },
+            mounted() {
+                window.addEventListener('message', (event) => {
+                    if (event.data && event.data.type === 'langChange') {
+                        this.currentLang = event.data.lang;
+                    }
+                });
+            },
             methods: {
+                t(key) {
+                    return i18n[this.currentLang][key] || key;
+                },
+                handleProviderChange(val) {
+                    const defaults = this.providerDefaults[val];
+                    if (defaults) {
+                        this.form.baseUrl = defaults.baseUrl;
+                        this.form.modelName = defaults.modelName;
+                    }
+                },
                 async saveConfig() {
                     if (!this.form.apiKey) {
-                        ElementPlus.ElMessage.error('API Key 不能为空');
+                        ElementPlus.ElMessage.error(this.t('emptyApiKey'));
                         return;
                     }
                     this.isSaving = true;
@@ -165,16 +273,24 @@
                             history.unshift({ time: new Date().toLocaleDateString(), type: 'success', title: 'API 配置成功', desc: `已连接到 ${this.form.provider} 模型 ${this.form.modelName}` });
                             localStorage.setItem('triz_history', JSON.stringify(history));
 
-                            ElementPlus.ElMessage.success('连接成功，配置已保存在本地浏览器！');
+                            ElementPlus.ElMessage.success(this.t('saveSuccess'));
                         } else {
                             const errData = await response.json().catch(() => ({}));
-                            ElementPlus.ElMessage.error(`连接失败: ${response.status} ${errData.error?.message || ''}`);
+                            ElementPlus.ElMessage.error(`${this.t('saveFail')}: ${response.status} ${errData.error?.message || ''}`);
                         }
                     } catch (error) {
-                        ElementPlus.ElMessage.error(`网络请求失败，请检查 Base URL 是否正确或是否存在跨域问题：${error.message}`);
+                        ElementPlus.ElMessage.error(`${this.t('networkFail')}${error.message}`);
                     } finally {
                         this.isSaving = false;
                     }
+                },
+                resetConfig() {
+                    this.form.provider = 'openai';
+                    this.form.baseUrl = 'https://api.openai.com/v1';
+                    this.form.apiKey = '';
+                    this.form.modelName = 'gpt-4o';
+                    this.form.temperature = 0.4;
+                    this.form.prompt = '你是一位顶级的 TRIZ（发明问题解决理论）专家。你的任务是：\n1. 引导用户输入问题背景，并进行结构化分析（包含系统功能、约束、工作原理、存在的问题及条件、现有解决方案缺点、新系统要求等）。\n2. 运用技术矛盾、物理矛盾、场分析、裁剪、进化法则、40个发明原理、阿奇舒勒矩阵、IFR等核心 TRIZ 工具生成解决方案。\n3. 最终输出包含序号、方案描述、所用创新原理及可用性评估的综合表格。';
                 },
                 exportConfig() {
                     const dataStr = JSON.stringify(this.form, null, 2);
@@ -187,7 +303,7 @@
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
-                    ElementPlus.ElMessage.success('配置已导出');
+                    ElementPlus.ElMessage.success(this.t('exportSuccess'));
                 },
                 triggerImport() {
                     this.$refs.fileInput.click();
@@ -199,21 +315,20 @@
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         try {
-                            const importedConfig = JSON.parse(e.target.result);
+                            const config = JSON.parse(e.target.result);
+                            if (config.provider) this.form.provider = config.provider;
+                            if (config.baseUrl) this.form.baseUrl = config.baseUrl;
+                            if (config.apiKey) this.form.apiKey = config.apiKey;
+                            if (config.modelName) this.form.modelName = config.modelName;
+                            if (config.prompt) this.form.prompt = config.prompt;
+                            if (config.temperature !== undefined) this.form.temperature = config.temperature;
                             
-                            // 验证关键字段是否存在
-                            if (importedConfig.hasOwnProperty('apiKey') && importedConfig.hasOwnProperty('baseUrl')) {
-                                this.form = { ...this.form, ...importedConfig };
-                                localStorage.setItem('triz_api_config', JSON.stringify(this.form));
-                                ElementPlus.ElMessage.success('配置导入成功！请点击"保存并测试连接"以验证。');
-                            } else {
-                                ElementPlus.ElMessage.error('无效的配置文件格式');
-                            }
-                        } catch (err) {
-                            ElementPlus.ElMessage.error('文件解析失败，请确保是合法的 JSON 文件');
+                            ElementPlus.ElMessage.success(this.t('importSuccess'));
+                        } catch (error) {
+                            ElementPlus.ElMessage.error(this.t('importFail'));
                         }
-                        // 重置 input，允许重复导入同一个文件
-                        event.target.value = '';
+                        // 清空 input 值，允许重复导入同一个文件
+                        this.$refs.fileInput.value = '';
                     };
                     reader.readAsText(file);
                 }
