@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+#app {
+  height: 100vh;
+}
+
+/* Custom styles migrated from solution.html & problem.html */
+.struct-card {
+  transition: all 0.3s ease;
+}
+
+.method-card {
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+.method-card:hover {
+  border-color: #93c5fd;
+  background-color: #f0f9ff;
+}
+.method-card.is-active {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+/* Export specific styles */
+.is-exporting { 
+  height: auto !important; 
+  max-height: none !important; 
+  overflow: visible !important; 
+  /* 强制设定一个固定宽度，防止截图时 flex 容器塌陷导致文字被横向截断 */
+  width: 1200px !important;
+  position: absolute !important;
+  top: -9999px !important; /* 移出屏幕外，防止闪烁 */
+  left: -9999px !important;
+  z-index: -1 !important;
+  background: white !important;
+}
+.is-exporting .el-table { 
+  height: auto !important; 
+  overflow: visible !important; 
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+.is-exporting .el-table__inner-wrapper { 
+  height: auto !important; 
+  max-height: none !important; 
+  overflow: visible !important; 
+  width: 100% !important;
+}
+.is-exporting .el-table__body-wrapper { 
+  height: auto !important; 
+  max-height: none !important; 
+  overflow: visible !important; 
+  width: 100% !important;
+}
+.is-exporting .el-table__header-wrapper { 
+  overflow: visible !important; 
+  width: 100% !important;
+}
+.is-exporting .el-table__body {
+  width: 100% !important;
+}
+/* 彻底解决 html2canvas 渲染 el-tag 文字消失的问题 */
+.is-exporting .el-tag { 
+  display: inline-block !important; 
+  white-space: normal !important; 
+  height: auto !important; 
+  line-height: 1.5 !important; 
+  padding: 6px 10px !important; 
+  border: 1px solid currentColor !important;
+  background-color: transparent !important;
+}
+.is-exporting .el-tag .el-tag__content {
+  display: inline-block !important;
+  color: #333333 !important; /* 强制统一使用深色字体，避免透明度或继承问题 */
+  white-space: normal !important;
+  overflow: visible !important;
+}
+.is-exporting .el-tag--primary .el-tag__content { color: #409eff !important; }
+.is-exporting .el-tag--success .el-tag__content { color: #67c23a !important; }
+.is-exporting .el-tag--warning .el-tag__content { color: #e6a23c !important; }
+.is-exporting .el-tag--danger .el-tag__content { color: #f56c6c !important; }
+
+.is-exporting .el-loading-mask { 
+  display: none !important; 
+}
+.is-exporting .el-table__row {
+  height: auto !important;
+}
+.is-exporting .el-table .cell { 
+  overflow: visible !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  line-height: 1.6 !important;
+  padding: 16px 12px !important;
+  min-height: 50px !important;
+}
+.is-exporting .text-gray-700, 
+.is-exporting .text-gray-600, 
+.is-exporting .text-gray-500 { 
+  color: #333333 !important; 
+}
