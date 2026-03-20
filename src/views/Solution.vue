@@ -106,12 +106,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElLoading } from 'element-plus'
 import * as XLSX from 'xlsx'
 import html2canvas from 'html2canvas'
 import { useI18n } from '../composables/useI18n'
+import { store } from '../store'
 
 const i18nMsgs = {
   zh: {
@@ -217,7 +218,10 @@ const trizMethods = [
 const selectedMethods = ref(['principles', 'matrix'])
 const isGenerating = ref(false)
 const solutions = ref([])
-const hasProblemData = ref(false)
+const hasProblemData = computed(() => {
+  const data = store.structData
+  return !!(data && Object.keys(data).length > 0 && (data.techSystem || data.problem))
+})
 
 const toggleMethod = (id) => {
   const index = selectedMethods.value.indexOf(id)
@@ -227,18 +231,6 @@ const toggleMethod = (id) => {
     selectedMethods.value.push(id)
   }
 }
-
-onMounted(() => {
-  const structDataStr = localStorage.getItem('triz_struct_data')
-  if (structDataStr) {
-    try {
-      const parsedData = JSON.parse(structDataStr)
-      if (parsedData && Object.keys(parsedData).length > 0 && (parsedData.techSystem || parsedData.problem)) {
-        hasProblemData.value = true
-      }
-    } catch(e) {}
-  }
-})
 
 const goToProblem = () => {
   router.push('/problem')
@@ -251,14 +243,14 @@ const generateSolutions = async () => {
   }
 
   const config = JSON.parse(localStorage.getItem('triz_api_config') || '{}')
-  const structDataStr = localStorage.getItem('triz_struct_data')
+  const parsedData = store.structData
 
   if (!config.apiKey) {
     ElMessage.error(t('errNoApi'))
     return
   }
 
-  if (!structDataStr) {
+  if (!parsedData) {
     ElMessage.warning(t('warnNoData'))
     return
   }
@@ -268,9 +260,8 @@ const generateSolutions = async () => {
   
   const methodNames = trizMethods.filter(m => selectedMethods.value.includes(m.id)).map(m => t('method_' + m.id)).join('、')
   
-  let problemContext = structDataStr
+  let problemContext = ''
   try {
-    const parsedData = JSON.parse(structDataStr)
     problemContext = `
 1. Tech System: ${parsedData.techSystem || ''}
 2. Function: ${parsedData.systemFunction || ''}

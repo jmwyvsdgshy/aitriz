@@ -98,6 +98,8 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useI18n } from '../composables/useI18n'
 
+import { store } from '../store'
+
 const i18nMsgs = {
   zh: {
     pageTitle: '步骤 2：问题定义与结构化分析',
@@ -183,7 +185,7 @@ watch(currentLang, (newLang) => {
 
 watch(structData, (newVal) => {
   if (analysisDone.value) {
-    localStorage.setItem('triz_struct_data', JSON.stringify(newVal))
+    store.structData = JSON.parse(JSON.stringify(newVal))
   }
 }, { deep: true })
 
@@ -245,7 +247,7 @@ const analyzeProblem = async () => {
     Object.assign(structData, parsedData)
     
     analysisDone.value = true
-    localStorage.setItem('triz_struct_data', JSON.stringify(structData))
+    store.structData = JSON.parse(JSON.stringify(structData))
     ElMessage.success(t('successParsed'))
   } catch (error) {
     console.error('Analysis Error:', error)
