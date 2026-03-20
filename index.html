@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-TRIZ 创新引擎</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .el-menu--horizontal { border-bottom: none !important; }
+        .el-menu-item { font-size: 15px !important; font-weight: 500; }
+        .el-menu-item.is-active { font-weight: bold; background-color: transparent !important; }
+        iframe { width: 100%; height: 100%; border: none; display: block; }
+    </style>
+</head>
+<body>
+    <div id="app" class="h-full flex flex-col bg-gray-50">
+        <!-- 顶部一级导航 -->
+        <header class="h-[64px] bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 shadow-sm z-10 w-full overflow-hidden">
+            <div class="flex items-center min-w-0 flex-1">
+                <!-- Logo 区 -->
+                <div class="flex items-center mr-10 cursor-pointer shrink-0">
+                    <div class="bg-blue-600 p-1.5 rounded-lg mr-3 shadow-md shadow-blue-200">
+                        <el-icon class="text-white" :size="24"><Opportunity /></el-icon>
+                    </div>
+                    <span class="text-xl font-bold text-slate-800 tracking-wide">AI-TRIZ Pro</span>
+                </div>
+                
+                <!-- 导航菜单 -->
+                <el-menu :default-active="activeMenu" class="h-[64px] border-none !bg-transparent w-full" mode="horizontal" @select="handleSelect" :ellipsis="false">
+                    <el-menu-item index="settings.html">
+                        <el-icon><Setting /></el-icon>1. 系统配置
+                    </el-menu-item>
+                    <el-menu-item index="problem.html">
+                        <el-icon><EditPen /></el-icon>2. 问题定义与分析
+                    </el-menu-item>
+                    <el-menu-item index="solution.html">
+                        <el-icon><Opportunity /></el-icon>3. TRIZ 方案生成
+                    </el-menu-item>
+                </el-menu>
+            </div>
+
+            <!-- 右侧快捷操作与状态 -->
+            <div class="flex items-center space-x-4 shrink-0 ml-4">
+                <el-tag size="large" effect="plain" type="info" class="!border-gray-200 !text-gray-600">
+                    <el-icon class="mr-1"><Lock /></el-icon>数据仅保留在本地
+                </el-tag>
+                <!-- <el-tooltip content="了解 TRIZ 理论" placement="bottom">
+                    <el-button plain circle icon="Reading" />
+                </el-tooltip> -->
+                <el-button type="primary" plain icon="Share" @click="shareApp">分享应用</el-button>
+            </div>
+        </header>
+
+        <!-- 主内容区 (Iframe 承载各模块) -->
+        <main class="flex-1 relative overflow-hidden">
+            <iframe id="main-iframe" :src="currentSrc" title="业务模块展示区"></iframe>
+        </main>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    activeMenu: 'settings.html',
+                    currentSrc: 'settings.html'
+                }
+            },
+            mounted() {
+                // 监听子 iframe 发来的路由跳转请求
+                window.addEventListener('message', (event) => {
+                    if (event.data && event.data.type === 'navigate') {
+                        this.activeMenu = event.data.target;
+                        this.currentSrc = event.data.target;
+                    }
+                });
+            },
+            methods: {
+                handleSelect(key) {
+                    this.activeMenu = key;
+                    this.currentSrc = key;
+                },
+                shareApp() {
+                    navigator.clipboard.writeText(window.location.href).then(() => {
+                        ElementPlus.ElMessage.success('应用链接已复制到剪贴板，快去分享吧！');
+                    });
+                }
+            }
+        });
+        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+            app.component(key, component);
+        }
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+</body>
+</html>

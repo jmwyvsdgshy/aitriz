@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRIZ 创新工具箱</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 overflow-x-hidden h-full">
+    <div id="app" class="p-8 h-full flex flex-col max-w-screen-2xl mx-auto">
+        <header class="flex items-center justify-between mb-8 shrink-0">
+            <div class="flex items-center">
+                <h2 class="text-2xl font-bold text-gray-800 mr-8">TRIZ 创新工具全景图</h2>
+                <el-tabs v-model="activeTab" class="w-[400px]">
+                    <el-tab-pane label="40个发明原理" name="principles"></el-tab-pane>
+                    <el-tab-pane label="76个标准解" name="standards"></el-tab-pane>
+                    <el-tab-pane label="技术进化法则" name="trends"></el-tab-pane>
+                </el-tabs>
+            </div>
+            <div class="flex items-center">
+                <el-input placeholder="搜索原理或案例..." prefix-icon="Search" style="width: 250px;" class="mr-4"></el-input>
+                <el-button type="primary" plain icon="Opportunity">AI 灵感激发</el-button>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto pb-8">
+            <div v-show="activeTab === 'principles'">
+                <p class="text-gray-500 mb-6">40个发明原理是TRIZ理论中最直观、最常用的工具。点击下方卡片，查看AI解释与真实案例。</p>
+                
+                <div class="grid grid-cols-4 lg:grid-cols-5 xl:grid-cols-8 gap-5">
+                    <div v-for="item in principles" :key="item.id" 
+                         @click="showDetail(item)"
+                         class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-blue-300 cursor-pointer transition-all text-center flex flex-col items-center group">
+                        <div class="w-14 h-14 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold mb-3 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                            {{item.id}}
+                        </div>
+                        <h4 class="text-sm font-bold text-gray-800">{{item.name}}</h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 空白占位 -->
+            <div v-show="activeTab !== 'principles'" class="h-full flex flex-col items-center justify-center text-gray-400 min-h-[500px]">
+                <el-icon :size="80" class="mb-6 text-gray-300"><Box /></el-icon>
+                <h3 class="text-xl font-semibold mb-2">模块建设中</h3>
+                <p>该功能正在接入系统专家知识库，敬请期待...</p>
+            </div>
+        </main>
+
+        <!-- 详情弹窗 -->
+        <el-dialog v-model="dialogVisible" :title="'NO.' + currentPrinciple.id + ' - ' + currentPrinciple.name" width="40%" class="!rounded-2xl">
+            <div class="space-y-5">
+                <div class="bg-blue-50 p-5 rounded-xl text-blue-800 border border-blue-100">
+                    <h5 class="font-bold mb-2 flex items-center"><el-icon class="mr-2"><Reading /></el-icon>原理解释</h5>
+                    <p class="text-sm leading-relaxed">{{currentPrinciple.desc}}</p>
+                </div>
+                <div>
+                    <h5 class="font-bold text-gray-800 mb-3 flex items-center"><el-icon class="mr-2"><Monitor /></el-icon> 经典工业案例</h5>
+                    <ul class="list-disc pl-5 text-sm text-gray-600 space-y-2">
+                        <li v-for="(caseItem, index) in currentPrinciple.cases" :key="index">{{caseItem}}</li>
+                    </ul>
+                </div>
+                <el-divider border-style="dashed" />
+                <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
+                    <h5 class="font-bold text-indigo-700 mb-3 flex items-center"><el-icon class="mr-2"><Cpu /></el-icon> AI 头脑风暴：应用到您的项目中</h5>
+                    <p class="text-sm text-gray-600 mb-3">您的当前项目：<strong>新能源电池减重</strong></p>
+                    <p class="text-sm text-gray-700 italic border-l-4 border-indigo-400 pl-4 py-1">
+                        "AI 提示：尝试考虑 {{currentPrinciple.name}}，是否能把电池划分为多个可独立拆卸的小模块？在无需长续航的市区通勤场景下，用户可以取下部分电池模块，从而大幅降低车身重量和能耗。"
+                    </p>
+                </div>
+            </div>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="dialogVisible = false" round>关闭</el-button>
+                    <el-button type="primary" @click="dialogVisible = false" round>采纳该灵感</el-button>
+                </span>
+            </template>
+        </el-dialog>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    activeTab: 'principles',
+                    dialogVisible: false,
+                    currentPrinciple: {},
+                    principles: [
+                        { id: 1, name: '分割原理', desc: '将一个物体分成相互独立的部分；使物体成为可拆卸的；增加物体的分割程度。', cases: ['百叶窗替代整体窗帘', '模块化家具', '多节重载卡车'] },
+                        { id: 2, name: '抽取原理', desc: '将物体中产生负面影响的部分或属性分离出去，或者只抽取必要的部分或属性。', cases: ['将产生噪音的压缩机放在室外（空调）', '使用导盲犬替代视觉'] },
+                        { id: 3, name: '局部质量原理', desc: '将物体、环境或外部作用的均匀结构变为不均匀结构；让物体的不同部分实现不同功能。', cases: ['带有橡皮擦的铅笔', '多功能瑞士军刀'] },
+                        { id: 4, name: '不对称原理', desc: '将物体的对称形状变为不对称形状；如果已是不对称，则增加其不对称程度。', cases: ['汽车方向盘的不对称辐条', '异形防呆接口'] },
+                        { id: 5, name: '合并原理', desc: '在空间上将相同的物体或完成连续操作的物体合并起来；在时间上合并连续或平行的操作。', cases: ['双排直列式发动机', '多联装火箭炮'] },
+                        { id: 6, name: '多用性原理', desc: '使一个物体能完成多项功能，从而可以减少其他物体的数量。', cases: ['沙发床', '带有儿童座椅功能的行李箱'] },
+                        { id: 7, name: '嵌套原理', desc: '将一个物体放在第二个物体中，第二个放在第三个中；一个物体穿过另一物体的空腔。', cases: ['俄罗斯套娃', '汽车收音机天线', '卷尺'] },
+                        { id: 8, name: '配重原理', desc: '将物体与具有升力的另一物体结合以补偿其重量；通过与环境（如空气动力、流体动力）相互作用补偿其重量。', cases: ['起重机的配重块', '赛车尾翼产生下压力'] },
+                        { id: 9, name: '预先反作用', desc: '预先施加反作用', cases: ['预应力钢筋混凝土'] },
+                        { id: 10, name: '预先作用', desc: '预先完成部分或全部动作', cases: ['不干胶标签'] },
+                        { id: 13, name: '反向作用', desc: '使物体颠倒过来', cases: ['跑步机（人跑地不动）'] },
+                        { id: 15, name: '动态化原理', desc: '使物体或环境特征可变', cases: ['可调节角度的座椅'] },
+                        { id: 35, name: '参数变化', desc: '改变物理或化学参数', cases: ['液态变固态', '柔性材料'] },
+                        { id: 40, name: '复合材料', desc: '使用复合材料替代均质材料', cases: ['碳纤维自行车', '玻璃钢'] }
+                    ]
+                }
+            },
+            methods: {
+                showDetail(item) {
+                    this.currentPrinciple = item;
+                    this.dialogVisible = true;
+                }
+            }
+        });
+        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+            app.component(key, component);
+        }
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+</body>
+</html>

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRIZ 方案生成</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/html2canvas"></script>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .method-card { cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+        .method-card:hover { border-color: #93c5fd; background-color: #f0f9ff; }
+        .method-card.is-active { border-color: #3b82f6; background-color: #eff6ff; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2); }
+    </style>
+</head>
+<body class="bg-gray-50 overflow-x-hidden h-full">
+    <div id="app" class="p-8 h-full flex flex-col max-w-screen-2xl mx-auto">
+        <div class="flex justify-between items-center mb-6 shrink-0">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">步骤 3：TRIZ 方法选择与方案生成</h2>
+                <p class="text-gray-500 mt-2 text-sm">基于上一步结构化的问题，选择适合的 TRIZ 工具视角，让 AI 为您推导最终解决方案表。</p>
+            </div>
+            <div class="flex gap-3">
+                <el-button type="success" @click="exportExcel" :disabled="solutions.length === 0" size="large" round>
+                    <el-icon class="mr-2"><Download /></el-icon> 导出 Excel
+                </el-button>
+                <el-button type="primary" @click="exportImage" :disabled="solutions.length === 0" size="large" round>
+                    <el-icon class="mr-2"><Picture /></el-icon> 导出图片
+                </el-button>
+            </div>
+        </div>
+
+        <div class="flex-1 flex gap-8 overflow-hidden pb-4">
+            <!-- 左侧：TRIZ 方法选择器 -->
+            <div class="w-[300px] flex flex-col gap-3 h-full overflow-y-auto pr-2 shrink-0">
+                <h3 class="font-bold text-gray-700 mb-2 pl-1">选择切入视角 (多选)</h3>
+                
+                <div v-for="method in trizMethods" :key="method.id" 
+                     class="bg-white p-4 rounded-xl shadow-sm method-card flex items-center justify-between"
+                     :class="{'is-active': selectedMethods.includes(method.id)}"
+                     @click="toggleMethod(method.id)">
+                    <div class="flex items-center">
+                        <el-icon class="text-blue-500 mr-3 text-lg"><component :is="method.icon" /></el-icon>
+                        <span class="font-medium text-gray-700">{{method.name}}</span>
+                    </div>
+                    <el-checkbox :model-value="selectedMethods.includes(method.id)" @click.stop></el-checkbox>
+                </div>
+
+                <el-button type="primary" size="large" class="mt-4 !rounded-xl shadow-md" @click="generateSolutions" :loading="isGenerating">
+                    <el-icon class="mr-2"><Cpu /></el-icon> 开始推导方案
+                </el-button>
+            </div>
+
+            <!-- 右侧：方案表格生成区 -->
+            <div class="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col h-full overflow-hidden">
+                <div v-if="solutions.length === 0 && !isGenerating" class="h-full flex flex-col items-center justify-center text-gray-400">
+                    <img src="https://illustrations.popsy.co/blue/startup.svg" class="w-64 h-64 opacity-60 mb-4" alt="Waiting">
+                    <p class="text-lg text-gray-600 font-medium">勾选左侧的 TRIZ 方法并点击生成</p>
+                    <p class="text-sm mt-2 text-gray-400">AI 将结合您上一步定义的问题，综合运用所选理论生成可用性评估表</p>
+                </div>
+
+                <div v-else-if="isGenerating" class="h-full flex flex-col items-center justify-center">
+                    <el-icon class="is-loading text-blue-500 mb-4" :size="50"><Loading /></el-icon>
+                    <p class="text-gray-600 font-medium animate-pulse">TRIZ 专家正在推导概念中，这可能需要几十秒...</p>
+                    <div class="mt-4 text-sm text-gray-400 max-w-md text-center">
+                        正在使用 <span class="text-blue-500">{{selectedMethods.length}}</span> 种 TRIZ 工具交叉验证解空间...
+                    </div>
+                </div>
+
+                <div v-else class="h-full flex flex-col">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center shrink-0">
+                        <el-icon class="mr-2 text-green-500"><DataLine /></el-icon> 最终问题解方案表
+                    </h3>
+                    
+                    <div id="export-target" class="flex-1 overflow-auto border border-gray-200 rounded-xl bg-white">
+                        <el-table :data="solutions" stripe style="width: 100%" height="100%" :header-cell-style="{background:'#f8fafc', color:'#334155'}">
+                            <el-table-column prop="id" label="序号" width="70" align="center"></el-table-column>
+                            <el-table-column prop="trizPrinciple" label="所用创新原理 (切入点)" width="200">
+                                <template #default="scope">
+                                    <el-tag size="small" effect="light" :type="scope.row.tagType" class="!whitespace-normal h-auto py-1">
+                                        {{ scope.row.trizPrinciple }}
+                                    </el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="solutionDesc" label="具体方案描述" min-width="350">
+                                <template #default="scope">
+                                    <div class="text-sm leading-relaxed text-gray-700 py-2">{{ scope.row.solutionDesc }}</div>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="evaluation" label="可用性评估" width="220">
+                                <template #default="scope">
+                                    <div class="text-sm text-gray-600">
+                                        <div class="flex items-center mb-1">
+                                            <span class="text-xs font-bold text-gray-500 w-12">优点:</span>
+                                            <span class="text-green-600">{{ scope.row.pros }}</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <span class="text-xs font-bold text-gray-500 w-12">缺点:</span>
+                                            <span class="text-orange-600">{{ scope.row.cons }}</span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    isGenerating: false,
+                    selectedMethods: ['matrix', 'principles'],
+                    trizMethods: [
+                        { id: 'conflict', name: '技术矛盾与物理矛盾', icon: 'Switch' },
+                        { id: 'field', name: '场与场分析 (物场模型)', icon: 'Connection' },
+                        { id: 'trimming', name: '功能分析和裁剪', icon: 'Scissor' },
+                        { id: 'evolution', name: '技术系统进化法则', icon: 'TrendCharts' },
+                        { id: 'principles', name: '40个发明原理', icon: 'Lightbulb' },
+                        { id: 'ariz', name: 'ARIZ 算法', icon: 'Guide' },
+                        { id: 'matrix', name: '阿奇舒勒矩阵 (矛盾矩阵)', icon: 'Grid' },
+                        { id: 'ifr', name: '最终理想解 (IFR)', icon: 'Star' }
+                    ],
+                    solutions: []
+                }
+            },
+            methods: {
+                toggleMethod(id) {
+                    const index = this.selectedMethods.indexOf(id);
+                    if (index > -1) {
+                        this.selectedMethods.splice(index, 1);
+                    } else {
+                        this.selectedMethods.push(id);
+                    }
+                },
+                async generateSolutions() {
+                    if (this.selectedMethods.length === 0) {
+                        ElementPlus.ElMessage.warning('请至少选择一种 TRIZ 方法进行推导');
+                        return;
+                    }
+
+                    const config = JSON.parse(localStorage.getItem('triz_api_config'));
+                    const structDataStr = localStorage.getItem('triz_struct_data');
+
+                    if (!config || !config.apiKey) {
+                        ElementPlus.ElMessage.error('请先在【系统配置】页面配置 API Key');
+                        return;
+                    }
+
+                    if (!structDataStr) {
+                        ElementPlus.ElMessage.warning('未检测到问题定义数据，请先返回上一步进行问题分析');
+                        return;
+                    }
+
+                    this.isGenerating = true;
+                    this.solutions = [];
+                    
+                    const methodNames = this.trizMethods.filter(m => this.selectedMethods.includes(m.id)).map(m => m.name).join('、');
+                    
+                    // 解析存入的 structDataStr
+                    let problemContext = structDataStr;
+                    try {
+                        const parsedData = JSON.parse(structDataStr);
+                        problemContext = `
+1. 技术系统: ${parsedData.techSystem}
+2. 系统功能: ${parsedData.systemFunction}
+3. 约束条件: ${parsedData.systemConstraint}
+4. 工作原理: ${parsedData.principle}
+5. 存在问题: ${parsedData.problem}
+6. 出现条件: ${parsedData.condition}
+7. 历史方案: ${parsedData.history}
+8. 理想要求: ${parsedData.requirement}
+`;
+                    } catch(e) {}
+
+                    const systemPrompt = config.prompt + `\n
+用户定义的问题背景如下：
+${problemContext}
+
+请你运用以下 TRIZ 方法：【${methodNames}】进行发散与推导。
+请务必返回完全合法的 JSON 对象（包含一个 "solutions" 数组，数组中每个对象代表一个解决方案），必须严格遵守 JSON 格式。
+解决方案对象必须包含以下键：
+- "id": 数字序号
+- "trizPrinciple": 使用的创新原理(切入点)
+- "tagType": 标签颜色(从 'primary', 'success', 'warning', 'danger' 中选一)
+- "solutionDesc": 具体方案描述
+- "pros": 优点
+- "cons": 缺点`;
+
+                    try {
+                        const response = await fetch(`${config.baseUrl}/chat/completions`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${config.apiKey}`
+                            },
+                            body: JSON.stringify({
+                                model: config.modelName,
+                                temperature: config.temperature,
+                                response_format: { type: "json_object" },
+                                messages: [
+                                    { role: 'system', content: systemPrompt },
+                                    { role: 'user', content: '请生成解决方案表格数据，严格按照 JSON 格式输出。' }
+                                ]
+                            })
+                        });
+
+                        if (!response.ok) throw new Error('API 请求失败');
+                        
+                        const data = await response.json();
+                        let resultText = data.choices[0].message.content;
+                        
+                        resultText = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
+                        
+                        const parsedResult = JSON.parse(resultText);
+                        this.solutions = parsedResult.solutions || parsedResult;
+                        
+                        // 更新统计数据
+                        let count = parseInt(localStorage.getItem('triz_stats_solutions') || 0);
+                        localStorage.setItem('triz_stats_solutions', count + this.solutions.length);
+                        let apiCount = parseInt(localStorage.getItem('triz_stats_apicalls') || 0);
+                        localStorage.setItem('triz_stats_apicalls', apiCount + 1);
+
+                        ElementPlus.ElMessage.success('方案生成完毕！');
+                    } catch (error) {
+                        ElementPlus.ElMessage.error(`生成失败：${error.message}，请检查 API 配置或网络。`);
+                        console.error(error);
+                    } finally {
+                        this.isGenerating = false;
+                    }
+                },
+                exportExcel() {
+                    try {
+                        const exportData = this.solutions.map(s => ({
+                            '序号': s.id,
+                            '所用创新原理': s.trizPrinciple,
+                            '具体方案描述': s.solutionDesc,
+                            '优点': s.pros,
+                            '缺点': s.cons
+                        }));
+                        const ws = XLSX.utils.json_to_sheet(exportData);
+                        const wb = XLSX.utils.book_new();
+                        XLSX.utils.book_append_sheet(wb, ws, "TRIZ方案");
+                        XLSX.writeFile(wb, "TRIZ_最终解决方案.xlsx");
+                        ElementPlus.ElMessage.success('Excel 报表导出成功！');
+                    } catch (error) {
+                        ElementPlus.ElMessage.error('导出失败：' + error.message);
+                    }
+                },
+                exportImage() {
+                    const target = document.getElementById('export-target');
+                    if (!target) return;
+                    
+                    const loading = ElementPlus.ElLoading.service({
+                        target: target,
+                        text: '正在生成图片，请稍候...',
+                    });
+
+                    // Temporarily remove constraints for full table capture
+                    const originalHeight = target.style.height;
+                    const originalMaxHeight = target.style.maxHeight;
+                    const originalOverflow = target.style.overflow;
+                    
+                    target.style.height = 'auto';
+                    target.style.maxHeight = 'none';
+                    target.style.overflow = 'visible';
+
+                    html2canvas(target, {
+                        scale: 2,
+                        useCORS: true,
+                        backgroundColor: '#ffffff'
+                    }).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = 'TRIZ_解决方案_' + new Date().getTime() + '.png';
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                        ElementPlus.ElMessage.success('图片导出成功！');
+                    }).catch(err => {
+                        ElementPlus.ElMessage.error('导出图片失败：' + err.message);
+                    }).finally(() => {
+                        // Restore styles
+                        target.style.height = originalHeight;
+                        target.style.maxHeight = originalMaxHeight;
+                        target.style.overflow = originalOverflow;
+                        loading.close();
+                    });
+                }
+            },
+            mounted() {
+                // 监听父级传递的消息
+                window.addEventListener('message', (e) => {
+                    if (e.data && e.data.type === 'triggerGenerate') {
+                        // 自动触发生成逻辑
+                    }
+                });
+            }
+        });
+        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+            app.component(key, component);
+        }
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+</body>
+</html>

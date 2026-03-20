@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 矛盾矩阵</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%); }
+        .principle-card { transition: all 0.3s ease; }
+        .principle-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15); }
+    </style>
+</head>
+<body class="bg-gray-50 overflow-x-hidden h-full">
+    <div id="app" class="p-8 h-full flex flex-col max-w-screen-2xl mx-auto">
+        <div class="flex justify-between items-center mb-6 shrink-0">
+            <div class="flex items-center">
+                <h2 class="text-2xl font-bold text-gray-800 mr-4">AI 赋能阿奇舒勒矩阵</h2>
+                <el-tag type="primary" effect="light" round>LLM 辅助解析</el-tag>
+            </div>
+            <el-button type="primary" plain icon="RefreshLeft" @click="reset">重新分析</el-button>
+        </div>
+
+        <div class="flex-1 flex gap-8 overflow-hidden pb-4">
+            <!-- 左侧：输入与提取区 -->
+            <div class="w-1/3 flex flex-col gap-6 h-full overflow-y-auto pr-2">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 shrink-0">
+                    <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                        <el-icon class="mr-2 text-blue-500"><ChatDotSquare /></el-icon> 描述技术矛盾
+                    </h3>
+                    <p class="text-sm text-gray-500 mb-4 leading-relaxed">
+                        请用自然语言描述您遇到的技术瓶颈。<br/>
+                        例如：<span class="text-gray-400">我想提升设备的续航，但是这会导致重量恶化。</span>
+                    </p>
+                    <el-input
+                        v-model="problemDesc"
+                        type="textarea"
+                        :rows="6"
+                        placeholder="请输入问题描述..."
+                        class="mb-4"
+                    ></el-input>
+                    <el-button type="primary" size="large" class="w-full !rounded-xl" @click="analyzeProblem" :loading="isAnalyzing">
+                        <el-icon class="mr-2"><MagicStick /></el-icon> AI 智能解析矛盾参数
+                    </el-button>
+                </div>
+
+                <div v-if="analysisDone" class="bg-white rounded-2xl shadow-sm border border-blue-100 p-6 gradient-bg shrink-0">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <el-icon class="mr-2 text-indigo-600"><DataAnalysis /></el-icon> 39个工程参数映射
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500">
+                            <p class="text-xs text-gray-500 mb-1">想要改善的参数 (Improving)</p>
+                            <p class="font-bold text-gray-800">No. 14 - 速度 / No. 39 - 生产率</p>
+                            <p class="text-sm text-gray-600 mt-1">（AI解读：期望增加续航和飞行性能）</p>
+                        </div>
+                        <div class="flex justify-center"><el-icon class="text-gray-400 text-xl"><Switch /></el-icon></div>
+                        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500">
+                            <p class="text-xs text-gray-500 mb-1">随之恶化的参数 (Worsening)</p>
+                            <p class="font-bold text-gray-800">No. 2 - 运动物体的重量</p>
+                            <p class="text-sm text-gray-600 mt-1">（AI解读：电池体积和重量增加）</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：解决方案区 -->
+            <div class="w-2/3 h-full overflow-y-auto pl-2 flex flex-col gap-6 pb-4">
+                <div v-if="!analysisDone" class="bg-white rounded-2xl shadow-sm border border-gray-100 flex-1 flex flex-col items-center justify-center text-gray-400 min-h-[500px]">
+                    <el-icon :size="80" class="text-gray-200 mb-6"><Cpu /></el-icon>
+                    <p class="text-lg text-gray-500">在左侧输入问题并点击分析</p>
+                    <p class="text-sm mt-2 text-gray-400">AI 将为您提取工程参数，并匹配 40 个发明原理</p>
+                </div>
+
+                <template v-else>
+                    <!-- 推荐的发明原理 -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 shrink-0">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                            <el-icon class="mr-2 text-orange-500"><Opportunity /></el-icon> 矩阵匹配：推荐发明原理
+                        </h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="principle-card bg-blue-50 border border-blue-100 p-4 rounded-xl cursor-pointer relative overflow-hidden" 
+                                 :class="{'ring-2 ring-blue-500 shadow-md': activePrinciple === 35}"
+                                 @click="activePrinciple = 35">
+                                <div class="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg">NO.35</div>
+                                <h4 class="font-bold text-blue-800 mb-2">物理/化学参数改变原理</h4>
+                                <p class="text-sm text-blue-600">改变物体的物理状态、浓度或密度，改变柔性、温度等。</p>
+                            </div>
+                            <div class="principle-card bg-purple-50 border border-purple-100 p-4 rounded-xl cursor-pointer relative overflow-hidden" 
+                                 :class="{'ring-2 ring-purple-500 shadow-md': activePrinciple === 40}"
+                                 @click="activePrinciple = 40">
+                                <div class="absolute top-0 right-0 bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg">NO.40</div>
+                                <h4 class="font-bold text-purple-800 mb-2">复合材料原理</h4>
+                                <p class="text-sm text-purple-600">将均质材料替换为复合材料，以减轻重量并提升强度。</p>
+                            </div>
+                            <div class="principle-card bg-emerald-50 border border-emerald-100 p-4 rounded-xl cursor-pointer relative overflow-hidden" 
+                                 :class="{'ring-2 ring-emerald-500 shadow-md': activePrinciple === 2}"
+                                 @click="activePrinciple = 2">
+                                <div class="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg">NO.2</div>
+                                <h4 class="font-bold text-emerald-800 mb-2">抽取/分离原理</h4>
+                                <p class="text-sm text-emerald-600">将产生负面影响的部分或属性从物体中分离出去。</p>
+                            </div>
+                            <div class="principle-card bg-amber-50 border border-amber-100 p-4 rounded-xl cursor-pointer relative overflow-hidden" 
+                                 :class="{'ring-2 ring-amber-500 shadow-md': activePrinciple === 28}"
+                                 @click="activePrinciple = 28">
+                                <div class="absolute top-0 right-0 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg">NO.28</div>
+                                <h4 class="font-bold text-amber-800 mb-2">机械系统替代原理</h4>
+                                <p class="text-sm text-amber-600">用光学、声学、电磁等系统替代机械系统。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI 生成的落地概念 -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex-1 min-h-[300px] flex flex-col">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                                <el-icon class="mr-2 text-indigo-500"><Cpu /></el-icon> AI 创新概念生成 
+                                <span class="text-gray-400 text-sm ml-2 font-normal">(基于原理 NO.{{activePrinciple}})</span>
+                            </h3>
+                            <el-button type="success" plain size="small" round><el-icon class="mr-1"><Download /></el-icon>导出报告</el-button>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-xl p-6 border border-gray-200 flex-1 prose prose-blue max-w-none text-sm text-gray-700">
+                            <div v-if="activePrinciple === 35">
+                                <h4 class="text-lg text-gray-800 font-bold mb-2">概念 1：固态电池技术应用</h4>
+                                <p class="mb-4"><strong>应用原理：</strong>改变物理状态（液态电解质 -> 固态电解质）。</p>
+                                <p class="mb-6"><strong>具体方案：</strong>放弃传统的液态锂离子电池，采用高能量密度的固态电池。固态电池不仅能大幅提升单位体积/重量的电量（解决续航问题），同时去除了厚重的防护壳与冷却系统，从而抵消甚至降低了整体重量（解决重量恶化问题）。</p>
+                                <el-divider border-style="dashed"></el-divider>
+                                <h4 class="text-lg text-gray-800 font-bold mb-2 mt-6">概念 2：可变能量密度结构</h4>
+                                <p class="mb-4"><strong>应用原理：</strong>改变密度/浓度。</p>
+                                <p><strong>具体方案：</strong>采用半固态或特殊凝胶电解质材料，根据飞行状态动态调整电池热管理系统，在起飞等高功率需求时提升放电效率，在巡航时改变工作模式以延长寿命。</p>
+                            </div>
+                            <div v-if="activePrinciple === 40">
+                                <h4 class="text-lg text-gray-800 font-bold mb-2">概念 1：电池机身一体化 (CTC) 采用碳纤维复合材料</h4>
+                                <p class="mb-4"><strong>应用原理：</strong>将均质材料替换为复合材料。</p>
+                                <p><strong>具体方案：</strong>使用超轻的碳纤维增强复合材料(CFRP)重新设计无人机机身。不仅减轻机身自重以弥补大电池带来的重量增加，更将电池直接作为结构件嵌入复合材料机翼或机身中（结构电池），实现减重与扩容的双赢。</p>
+                            </div>
+                            <div v-if="activePrinciple === 2">
+                                <h4 class="text-lg text-gray-800 font-bold mb-2">概念 1：电源分离式设计 (系留或换电)</h4>
+                                <p class="mb-4"><strong>应用原理：</strong>将带来副作用的部分分离。</p>
+                                <p><strong>具体方案：</strong>不要在无人机上搭载全部电池。方案A：采用空中快速换电设计，无人机携带轻量电池，通过沿途的中继站自动更换电池吊舱；方案B：采用无线微波充电或激光充电技术，将重型电源留在地面或母舰上，将能量无线传输给空中的轻量无人机。</p>
+                            </div>
+                            <div v-if="activePrinciple === 28">
+                                <h4 class="text-lg text-gray-800 font-bold mb-2">概念 1：电磁悬浮与弹射起飞辅助</h4>
+                                <p class="mb-4"><strong>应用原理：</strong>用电磁场替代机械作用。</p>
+                                <p><strong>具体方案：</strong>无人机自重增加导致起飞能耗极大。可采用地面电磁弹射系统或磁悬浮轨道辅助起飞，让无人机在升空阶段不消耗自身电池电量，满电量直接进入巡航状态，从而变相增加有效续航。</p>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    problemDesc: '我们正在研发一款长续航无人机，为了增加飞行时间需要安装更大的电池，但这会增加无人机的重量，导致飞行能耗上升，起飞困难。',
+                    isAnalyzing: false,
+                    analysisDone: false,
+                    activePrinciple: 35
+                }
+            },
+            methods: {
+                analyzeProblem() {
+                    if (!this.problemDesc) {
+                        ElementPlus.ElMessage.warning('请输入问题描述');
+                        return;
+                    }
+                    this.isAnalyzing = true;
+                    setTimeout(() => {
+                        this.isAnalyzing = false;
+                        this.analysisDone = true;
+                        this.activePrinciple = 35;
+                        ElementPlus.ElMessage.success('分析完成，已为您生成解决方案');
+                    }, 1500);
+                },
+                reset() {
+                    this.problemDesc = '';
+                    this.analysisDone = false;
+                    this.activePrinciple = 35;
+                }
+            }
+        });
+        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+            app.component(key, component);
+        }
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+</body>
+</html>
