@@ -14,7 +14,7 @@
       </div>
 
       <!-- 中间导航菜单 -->
-      <div class="flex-1 flex justify-center max-w-2xl mx-8 hidden md:flex">
+      <div class="flex-1 flex justify-center max-w-3xl mx-8 hidden md:flex">
         <el-menu :default-active="activeMenu" class="h-[64px] border-none !bg-transparent w-full" mode="horizontal" @select="handleSelect" :ellipsis="false">
           <el-menu-item index="/settings">
             <el-icon><Setting /></el-icon>{{ t('navSettings') }}
@@ -24,6 +24,9 @@
           </el-menu-item>
           <el-menu-item index="/solution">
             <el-icon><Opportunity /></el-icon>{{ t('navSolution') }}
+          </el-menu-item>
+          <el-menu-item index="/inspiration">
+            <el-icon><MagicStick /></el-icon>{{ t('navInspiration') }}
           </el-menu-item>
         </el-menu>
       </div>
@@ -91,6 +94,7 @@ const i18nMsgs = {
     navSettings: '1. 系统配置',
     navProblem: '2. 问题定义与分析',
     navSolution: '3. TRIZ 方案生成',
+    navInspiration: '4. 跨界灵感看板',
     localDataOnly: '数据仅保留在本地',
     shareApp: '分享应用',
     followAccount: '关注：AI数术研习社',
@@ -103,6 +107,7 @@ const i18nMsgs = {
     navSettings: '1. Settings',
     navProblem: '2. Problem Definition',
     navSolution: '3. TRIZ Solutions',
+    navInspiration: '4. Inspirations',
     localDataOnly: 'Local Data Only',
     shareApp: 'Share App',
     followAccount: 'Follow Us',

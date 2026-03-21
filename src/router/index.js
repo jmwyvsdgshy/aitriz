@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Settings from '../views/Settings.vue'
 import Problem from '../views/Problem.vue'
 import Solution from '../views/Solution.vue'
+import CrossDomainInspiration from '../views/CrossDomainInspiration.vue'
 
 const routes = [
   {
@@ -30,6 +31,14 @@ const routes = [
     component: Solution,
     meta: {
       title: '创新方案推导 - AI-TRIZ 创新引擎 | Solution Derivation - AI-TRIZ Innovation Engine'
+    }
+  },
+  {
+    path: '/inspiration',
+    name: 'Inspiration',
+    component: CrossDomainInspiration,
+    meta: {
+      title: '跨界灵感看板 - AI-TRIZ 创新引擎 | Cross-Domain Inspiration - AI-TRIZ Innovation Engine'
     }
   }
 ]
