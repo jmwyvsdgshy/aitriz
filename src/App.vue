@@ -80,6 +80,9 @@
         </transition>
       </router-view>
     </main>
+
+    <!-- Vercel Analytics 组件 -->
+    <Analytics />
   </div>
 </template>
 
@@ -88,6 +91,7 @@ import { ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useI18n } from './composables/useI18n'
+import { Analytics } from '@vercel/analytics/vue'
 
 const i18nMsgs = {
   zh: {
